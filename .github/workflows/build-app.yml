@@ -1,0 +1,71 @@
+name: Rakit aplikasi
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.terbit.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Pasang paket
+        run: npm install
+      - name: Rakit aplikasi web
+        run: npm run build
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: www
+      - name: Terbitkan versi web
+        id: terbit
+        uses: actions/deploy-pages@v4
+
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Pasang paket
+        run: npm install
+      - name: Rakit aplikasi web
+        run: npm run build
+      - name: Siapkan proyek Android
+        run: |
+          npx cap add android
+          bash scripts/pasang-ikon.sh
+          npx cap sync android
+      - name: Rakit APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk ../SkriningGizi.apk
+      - name: Terbitkan APK di halaman Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: versi-${{ github.run_number }}
+          name: Skrining Gizi versi ${{ github.run_number }}
+          body: Unduh SkriningGizi.apk lalu pasang di HP Android.
+          files: SkriningGizi.apk
