@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function masuk() { return request.auth != null; }
+    function profil() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function aktif() {
+      return masuk()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && profil().aktif == true;
+    }
+    function admin() { return aktif() && profil().peran == 'admin'; }
+
+    // Penanda admin pertama: hanya bisa dibuat sekali
+    match /config/admin {
+      allow read: if masuk();
+      allow create: if masuk() && request.resource.data.uid == request.auth.uid;
+    }
+
+    // Akun petugas
+    match /users/{uid} {
+      allow read: if masuk() && (request.auth.uid == uid || aktif());
+      allow create: if masuk() && request.auth.uid == uid && (
+        (request.resource.data.peran == 'petugas' && request.resource.data.aktif == false)
+        || (request.resource.data.peran == 'admin' && request.resource.data.aktif == true
+            && get(/databases/$(database)/documents/config/admin).data.uid == uid)
+      );
+      allow update: if admin()
+        || (request.auth.uid == uid
+            && request.resource.data.peran == resource.data.peran
+            && request.resource.data.aktif == resource.data.aktif);
+      allow delete: if admin();
+    }
+
+    // Data skrining pasien
+    match /skrining/{id} {
+      allow read: if aktif();
+      allow create: if aktif() && request.resource.data.oleh == request.auth.uid;
+      allow update: if aktif()
+        && (admin() || resource.data.oleh == request.auth.uid)
+        && request.resource.data.oleh == resource.data.oleh;
+      allow delete: if admin()
+        || (aktif() && profil().peran == 'nakes' && resource.data.oleh == request.auth.uid);
+    }
+  }
+}

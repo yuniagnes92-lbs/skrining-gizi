@@ -1,0 +1,6 @@
+{
+  "appId": "id.gizi.skrining",
+  "appName": "Skrining Gizi",
+  "webDir": "www",
+  "android": { "allowMixedContent": false }
+}

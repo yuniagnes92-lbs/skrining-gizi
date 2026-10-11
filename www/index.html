@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2f6b4a">
+<meta name="description" content="Skrining gizi pasien MST dan GLIM untuk nakes dan petugas">
+<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Skrining Gizi MST–GLIM</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: buku register gizi klinis — tab di atas, formulir bertahap (identitas → antropometri → MST → GLIM → lab), register per tanggal */
+:root{
+  --bg:#f3f5f0; --card:#ffffff; --fg:#1d2a22; --muted:#5d6b61; --line:#d8dfd6;
+  --accent:#2f6b4a; --accent-soft:#e2eee6; --gold:#c98a14;
+  --ok:#2f7d4f; --warn:#b7791f; --bad:#b4442f; --info:#3b6aa8;
+  --ok-soft:#e3f1e8; --warn-soft:#f7ecd8; --bad-soft:#f6e1dc;
+  --display:"Bricolage Grotesque",system-ui,sans-serif;
+  --body:"Source Sans 3",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111813; --card:#18221b; --fg:#e6ede7; --muted:#9aaa9f; --line:#2b382f;
+  --accent:#7cc79a; --accent-soft:#213328; --gold:#e8b14a;
+  --ok:#6fcf93; --warn:#e6b25a; --bad:#ec8a74; --info:#8fb4e8;
+  --ok-soft:#1d3226; --warn-soft:#3a2f1a; --bad-soft:#3d221d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111813; --card:#18221b; --fg:#e6ede7; --muted:#9aaa9f; --line:#2b382f;
+  --accent:#7cc79a; --accent-soft:#213328; --gold:#e8b14a;
+  --ok:#6fcf93; --warn:#e6b25a; --bad:#ec8a74; --info:#8fb4e8;
+  --ok-soft:#1d3226; --warn-soft:#3a2f1a; --bad-soft:#3d221d; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.5 var(--body);padding-inline:16px;padding-block:20px 64px}
+.wrap{max-width:780px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font:800 clamp(1.6rem,5vw,2.2rem)/1.1 var(--display);margin:0;text-wrap:balance}
+h1 span{color:var(--accent)}
+.sub{color:var(--muted);margin:4px 0 0}
+.who{display:flex;align-items:center;gap:8px;font-size:.88rem;color:var(--muted);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 12px 5px 5px}
+.who b{color:var(--fg);font-weight:600}
+.av{width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--bg);display:grid;place-items:center;font:700 .8rem var(--body);overflow:hidden}
+.av img{width:100%;height:100%;object-fit:cover}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:5;padding-top:6px}
+.tabs button{flex:0 0 auto;font:600 .95rem var(--body);border:1px solid var(--line);background:var(--card);color:var(--fg);padding:8px 14px;border-radius:999px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.seg label:focus-within,.chk:focus-within{outline:2px solid var(--gold);outline-offset:2px}
+section.tab{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.card h2{font:600 1.08rem var(--display);margin:0;display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.card h2 small{font:500 .72rem var(--mono);color:var(--muted);letter-spacing:.02em}
+.card h3{font:600 .95rem var(--body);margin:4px 0 0}
+.step{font:500 .72rem var(--mono);color:var(--accent);letter-spacing:.06em;text-transform:uppercase}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--muted);font-weight:600;min-width:0}
+input,select,textarea{font:500 1rem var(--mono);color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 10px;width:100%;min-width:0}
+input[type=text],textarea,select{font-family:var(--body);font-size:1rem}
+textarea{min-height:70px;resize:vertical}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;flex-wrap:wrap}
+.seg label{flex:1 1 auto;text-align:center;padding:9px 8px;cursor:pointer;font-weight:600;color:var(--fg);background:var(--bg);border-right:1px solid var(--line)}
+.seg label:last-child{border-right:none}
+.seg input{position:absolute;opacity:0;width:1px;height:1px}
+.seg label:has(input:checked){background:var(--accent-soft);color:var(--accent)}
+.q{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-top:1px dashed var(--line)}
+.q:first-of-type{border-top:none;padding-top:0}
+.q p{margin:0;font-weight:600}
+.q .pts{font:500 .78rem var(--mono);color:var(--muted)}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);cursor:pointer}
+.chk input{width:18px;height:18px;margin-top:3px;flex:0 0 auto;accent-color:var(--accent)}
+.chk span{min-width:0}
+.res{display:flex;flex-direction:column;gap:6px;border-radius:12px;padding:12px 14px;background:var(--accent-soft)}
+.res.ok{background:var(--ok-soft)}.res.warn{background:var(--warn-soft)}.res.bad{background:var(--bad-soft)}
+.res .lbl{font:600 .75rem var(--body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.res .big{font:800 1.5rem/1.15 var(--display);text-wrap:balance}
+.res.ok .big{color:var(--ok)}.res.warn .big{color:var(--warn)}.res.bad .big{color:var(--bad)}
+.res p{margin:0;font-size:.9rem}
+.rows{display:flex;flex-direction:column}
+.row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed var(--line);align-items:baseline}
+.row:last-child{border-bottom:none}
+.row .k{color:var(--muted);min-width:0}
+.row .k code{font:400 .74rem var(--mono);display:block;opacity:.85}
+.row .v{font:500 .98rem var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+.pill{display:inline-block;font:600 .76rem var(--body);padding:2px 9px;border-radius:999px;border:1px solid currentColor;white-space:nowrap}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}.info{color:var(--info)}.mut{color:var(--muted)}
+.note{font-size:.85rem;color:var(--muted);margin:0}
+.hint{font-size:.82rem;color:var(--muted)}
+.labtab{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(90px,1fr) auto;gap:8px 12px;align-items:center}
+.labtab .h{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
+.labtab .nm{min-width:0}
+.labtab .nm small{display:block;font:400 .74rem var(--mono);color:var(--muted)}
+.labtab input{padding:7px 8px}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.btn{font:700 1rem var(--body);border-radius:10px;padding:11px 18px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--bg)}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn.danger{border-color:var(--bad);background:transparent;color:var(--bad)}
+.btn.danger.solid{background:var(--bad);color:var(--bg)}
+.btn.sm{font-size:.88rem;padding:7px 12px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.savebar{position:sticky;bottom:0;padding-block:10px calc(10px + env(safe-area-inset-bottom,0px));background:var(--bg);display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);z-index:4}
+.savebar .msg{font-size:.88rem;color:var(--muted);flex:1 1 180px;min-width:0}
+.edit-flag{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:8px 12px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+/* register */
+.filters{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.filters .full{grid-column:1/-1}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column}
+.kpi .n{font:800 1.5rem var(--display);font-variant-numeric:tabular-nums}
+.kpi .t{font-size:.78rem;color:var(--muted);line-height:1.25}
+.day{display:flex;flex-direction:column;gap:8px}
+.dayh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:0 2px;flex-wrap:wrap}
+.dayh b{font:600 1rem var(--display)}
+.dayh span{font:500 .78rem var(--mono);color:var(--muted)}
+.pt{display:grid;grid-template-columns:4px minmax(0,1fr) auto;gap:0 12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px 10px 0;cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%;overflow:hidden}
+.pt .bar{align-self:stretch;border-radius:0 4px 4px 0;background:var(--line)}
+.pt.ok .bar{background:var(--ok)}.pt.warn .bar{background:var(--warn)}.pt.bad .bar{background:var(--bad)}
+.pt .nm{font-weight:700;color:var(--fg);overflow-wrap:anywhere}
+.pt .meta{font-size:.82rem;color:var(--muted)}
+.pt .tags{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.empty{text-align:center;padding:28px 16px;color:var(--muted);display:flex;flex-direction:column;gap:10px;align-items:center}
+.empty b{color:var(--fg);font:600 1.05rem var(--display)}
+/* detail */
+.sheet{position:fixed;inset:0;background:rgba(10,16,12,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center;padding-top:calc(24px + env(safe-area-inset-top,0px))}
+.sheet .panel{background:var(--bg);width:100%;max-width:780px;max-height:100%;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px}
+@media (min-width:700px){.sheet{align-items:center;padding:32px}.sheet .panel{border-radius:18px;max-height:90vh}}
+.sheet h2{font:800 1.4rem var(--display);margin:0;overflow-wrap:anywhere}
+/* reference */
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;z-index:30;max-width:calc(100% - 32px)}
+.banner{border-radius:12px;padding:12px 14px;background:var(--warn-soft);color:var(--fg);font-size:.92rem}
+@media (max-width:420px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.kpi .n{font-size:1.25rem}.filters{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:no-preference){.pt{transition:border-color .15s}.pt:hover{border-color:var(--accent)}}
+.auth{max-width:460px}
+.err{color:var(--bad);margin:0;font-size:.9rem;font-weight:600}
+.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+.row.acc{flex-wrap:wrap}
+#who-peran{font:600 .78rem var(--body);color:var(--accent)}
+</style>
+</head>
+<body>
+
+
+<div class="wrap auth" id="cfg" hidden>
+  <header><div><h1>Skrining Gizi <span>MST–GLIM</span></h1></div></header>
+  <div class="card">
+    <h2>Database belum dihubungkan</h2>
+    <p class="note">Isi file <code>src/firebase-config.js</code> dengan konfigurasi Firebase Anda, lalu rakit ulang APK. Langkahnya ada di file PANDUAN.</p>
+  </div>
+</div>
+
+<div class="wrap auth" id="login" hidden>
+  <header><div>
+    <h1>Skrining Gizi <span>MST–GLIM</span></h1>
+    <p class="sub">Aplikasi skrining gizi untuk nakes dan petugas.</p>
+  </div></header>
+  <form class="card" id="f-masuk">
+    <h2>Masuk</h2>
+    <label class="f">Email<input id="m-email" type="email" autocomplete="email" autocapitalize="none" spellcheck="false"></label>
+    <label class="f">Kata sandi<input id="m-p" type="password" autocomplete="current-password"></label>
+    <p class="err" id="m-err" hidden></p>
+    <button class="btn" type="submit" id="btn-masuk">Masuk</button>
+    <div class="btns">
+      <button class="btn sm ghost" type="button" id="btn-ke-daftar">Daftar akun baru</button>
+      <button class="btn sm ghost" type="button" id="btn-lupa">Lupa kata sandi</button>
+    </div>
+  </form>
+  <form class="card" id="f-daftar" hidden>
+    <h2>Daftar akun</h2>
+    <p class="note">Akun pertama otomatis menjadi admin. Akun berikutnya aktif setelah disetujui admin.</p>
+    <label class="f">Nama lengkap<input id="d-nama" type="text" autocomplete="name"></label>
+    <label class="f">Profesi<input id="d-prof" type="text" placeholder="mis. Perawat, Dietisien"></label>
+    <label class="f">Email<input id="d-email" type="email" autocomplete="email" autocapitalize="none" spellcheck="false"></label>
+    <label class="f">Kata sandi (min. 6 karakter)<input id="d-p" type="password" autocomplete="new-password"></label>
+    <label class="f">Ulangi kata sandi<input id="d-p2" type="password" autocomplete="new-password"></label>
+    <p class="err" id="d-err" hidden></p>
+    <button class="btn" type="submit" id="btn-daftar">Daftar</button>
+    <button class="btn sm ghost" type="button" id="btn-ke-masuk">Sudah punya akun? Masuk</button>
+  </form>
+</div>
+
+<div class="wrap auth" id="tunggu" hidden>
+  <header><div><h1>Skrining Gizi <span>MST–GLIM</span></h1></div></header>
+  <div class="card">
+    <h2>Menunggu persetujuan</h2>
+    <p class="note" id="tunggu-msg">Akun Anda sudah terdaftar dan sedang menunggu persetujuan admin.</p>
+    <p class="note">Hubungi admin unit Anda. Halaman ini otomatis terbuka begitu akun disetujui.</p>
+    <div class="btns"><button class="btn ghost" type="button" id="btn-keluar2">Keluar</button></div>
+  </div>
+</div>
+
+<div class="wrap" id="main" hidden>
+  <header>
+    <div>
+      <h1>Skrining Gizi <span>MST–GLIM</span></h1>
+      <p class="sub">Isi data pasien, hasil skrining dihitung langsung, lalu simpan per tanggal. Data tersinkron untuk seluruh tim.</p>
+    </div>
+    <button class="who" id="who" type="button" data-t="akun" style="cursor:pointer;font:inherit"><span class="av" id="who-av">?</span><span><b id="who-nm">–</b> · <span id="who-peran"></span></span></button>
+  </header>
+
+  <div class="banner" id="offline" hidden>Sedang offline. Data tetap bisa disimpan dan akan terkirim otomatis saat online.</div>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-t="input" id="tb-input">Input skrining</button>
+    <button role="tab" aria-selected="false" data-t="data" id="tb-data">Data pasien <span id="cnt"></span></button>
+    <button role="tab" aria-selected="false" data-t="rujukan" id="tb-rujukan">Nilai rujukan</button>
+    <button role="tab" aria-selected="false" data-t="akun" id="tb-akun">Akun</button>
+  </nav>
+
+  <!-- ============ INPUT ============ -->
+  <section class="tab" id="tab-input">
+    <div class="edit-flag" id="editflag" hidden><span>Mengedit data: <span id="edit-nm"></span></span><button class="btn sm ghost" id="btn-cancel-edit" type="button">Batal edit</button></div>
+
+    <form id="form" class="tab" style="display:flex;flex-direction:column;gap:14px" autocomplete="off">
+    <div class="card">
+      <span class="step">Langkah 1</span>
+      <h2>Identitas pasien</h2>
+      <div class="grid">
+        <label class="f">Tanggal skrining<input id="f-tgl" type="date" required></label>
+        <label class="f">No. rekam medis<input id="f-rm" type="text" placeholder="mis. 01-23-45"></label>
+      </div>
+      <label class="f">Nama pasien<input id="f-nama" type="text" placeholder="Nama lengkap" required></label>
+      <div class="seg" role="radiogroup" aria-label="Jenis kelamin">
+        <label><input type="radio" name="jk" id="jk-p" value="p">Laki-laki</label>
+        <label><input type="radio" name="jk" id="jk-w" value="w" checked>Perempuan</label>
+      </div>
+      <div class="grid">
+        <label class="f">Usia (tahun)<input id="f-usia" type="number" inputmode="numeric" min="0" max="120"></label>
+        <label class="f">Ruang / unit<input id="f-ruang" type="text" placeholder="mis. Melati 2"></label>
+      </div>
+      <label class="f">Diagnosis medis<input id="f-dx" type="text" placeholder="mis. CKD stage 5, DM tipe 2"></label>
+    </div>
+
+    <div class="card">
+      <span class="step">Langkah 2</span>
+      <h2>Antropometri</h2>
+      <div class="grid">
+        <label class="f">BB sekarang (kg)<input id="a-bb" type="number" inputmode="decimal" step="0.1"></label>
+        <label class="f">Tinggi badan (cm)<input id="a-tb" type="number" inputmode="decimal" step="0.1"></label>
+        <label class="f">BB sebelumnya (kg)<input id="a-bbl" type="number" inputmode="decimal" step="0.1"></label>
+        <label class="f">Rentang waktu penurunan
+          <select id="a-per"><option value="le6">≤ 6 bulan terakhir</option><option value="gt6">&gt; 6 bulan</option></select></label>
+        <label class="f">LiLA (cm)<input id="a-lila" type="number" inputmode="decimal" step="0.1"></label>
+        <label class="f">Lingkar betis (cm)<input id="a-betis" type="number" inputmode="decimal" step="0.1"></label>
+        <label class="f">Kekuatan genggam (kg)<input id="a-hgs" type="number" inputmode="decimal" step="0.1"></label>
+      </div>
+      <div class="rows" id="antro-out"></div>
+    </div>
+
+    <div class="card">
+      <span class="step">Langkah 3</span>
+      <h2>Skrining MST <small>Malnutrition Screening Tool</small></h2>
+      <div class="q">
+        <p>1. Apakah pasien mengalami penurunan berat badan tanpa disengaja akhir-akhir ini?</p>
+        <div class="seg" role="radiogroup" aria-label="Penurunan BB">
+          <label><input type="radio" name="mq1" id="mq1-0" value="0">Tidak <span class="pts">0</span></label>
+          <label><input type="radio" name="mq1" id="mq1-u" value="u">Tidak yakin <span class="pts">2</span></label>
+          <label><input type="radio" name="mq1" id="mq1-y" value="y">Ya</label>
+        </div>
+        <label class="f" id="mq1b-wrap" hidden>Berapa banyak penurunannya?
+          <select id="mst-q1b">
+            <option value="">– pilih –</option>
+            <option value="1">1–5 kg (skor 1)</option>
+            <option value="2">6–10 kg (skor 2)</option>
+            <option value="3">11–15 kg (skor 3)</option>
+            <option value="4">&gt; 15 kg (skor 4)</option>
+            <option value="tt">Tidak tahu jumlahnya (skor 2)</option>
+          </select></label>
+      </div>
+      <div class="q">
+        <p>2. Apakah asupan makan berkurang karena nafsu makan menurun?</p>
+        <div class="seg" role="radiogroup" aria-label="Asupan menurun">
+          <label><input type="radio" name="mq2" id="mq2-0" value="0">Tidak <span class="pts">0</span></label>
+          <label><input type="radio" name="mq2" id="mq2-1" value="1">Ya <span class="pts">1</span></label>
+        </div>
+      </div>
+      <div class="res" id="mst-out"></div>
+    </div>
+
+    <div class="card">
+      <span class="step">Langkah 4</span>
+      <h2>Asesmen GLIM <small>dilakukan bila MST ≥ 2</small></h2>
+      <h3>Kriteria fenotip</h3>
+      <div class="rows" id="glim-fen"></div>
+      <div class="grid">
+        <label class="f">Batas IMT rendah
+          <select id="g-cut"><option value="asia">Asia: &lt;18,5 (&lt;70 th) · &lt;20 (≥70 th)</option><option value="global">Global: &lt;20 / &lt;22 (sedang), &lt;18,5 / &lt;20 (berat)</option></select></label>
+        <label class="f">Massa otot berkurang
+          <select id="g-otot"><option value="0">Tidak berkurang / tidak dinilai</option><option value="1">Defisit ringan–sedang</option><option value="2">Defisit berat</option></select></label>
+      </div>
+      <p class="hint" id="otot-hint">Penilaian massa otot dengan metode tervalidasi (BIA, DXA, CT) atau, bila tidak tersedia, pemeriksaan fisik, lingkar betis, dan kekuatan genggam.</p>
+      <h3>Kriteria etiologi</h3>
+      <label class="chk"><input type="checkbox" id="g-as1"><span>Asupan ≤ 50% kebutuhan energi selama &gt; 1 minggu</span></label>
+      <label class="chk"><input type="checkbox" id="g-as2"><span>Penurunan asupan apa pun selama &gt; 2 minggu</span></label>
+      <label class="chk"><input type="checkbox" id="g-as3"><span>Gangguan saluran cerna kronis yang mengganggu asimilasi (mis. sindrom usus pendek, insufisiensi pankreas, diare/muntah kronis)</span></label>
+      <label class="f">Inflamasi / beban penyakit
+        <select id="g-inf">
+          <option value="0">Tidak ada inflamasi bermakna</option>
+          <option value="kronis">Penyakit kronis dengan inflamasi (kanker, PPOK, gagal jantung, GGK, RA)</option>
+          <option value="akut">Penyakit/cedera akut, inflamasi berat (sepsis, trauma berat, luka bakar luas)</option>
+        </select></label>
+      <div class="res" id="glim-out"></div>
+    </div>
+
+    <div class="card">
+      <span class="step">Langkah 5</span>
+      <h2>Hasil laboratorium <small>isi yang tersedia</small></h2>
+      <div class="labtab" id="labtab"></div>
+      <p class="note">Nilai rujukan umum dewasa. Sesuaikan dengan rujukan laboratorium rumah sakit Anda.</p>
+    </div>
+
+    <div class="card">
+      <h2>Catatan</h2>
+      <textarea id="f-catatan" placeholder="Rencana intervensi, rujukan ke dietisien, dll."></textarea>
+    </div>
+    </form>
+
+    <div class="savebar">
+      <span class="msg" id="save-msg">Data tersimpan di database tim dan dikelompokkan sesuai tanggal skrining.</span>
+      <button class="btn ghost" type="button" id="btn-reset">Formulir baru</button>
+      <button class="btn" type="button" id="btn-save">Simpan data</button>
+    </div>
+  </section>
+
+  <!-- ============ DATA ============ -->
+  <section class="tab" id="tab-data" hidden>
+    <div class="filters">
+      <label class="f">Tanggal<input id="ftgl" type="date"></label>
+      <label class="f">Cari nama / No. RM<input id="fq" type="text" placeholder="Ketik untuk mencari"></label>
+      <div class="btns full">
+        <button class="btn sm ghost" type="button" id="btn-today">Hari ini</button>
+        <button class="btn sm ghost" type="button" id="btn-all">Semua tanggal</button>
+        <button class="btn sm ghost" type="button" id="btn-csv">Unduh CSV</button>
+      </div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><span class="n" id="k-tot">0</span><span class="t">Pasien diskrining</span></div>
+      <div class="kpi"><span class="n warn" id="k-mst">0</span><span class="t">Berisiko (MST ≥ 2)</span></div>
+      <div class="kpi"><span class="n bad" id="k-glim">0</span><span class="t">Malnutrisi (GLIM)</span></div>
+    </div>
+    <div id="list" style="display:flex;flex-direction:column;gap:18px">
+      <div class="empty"><b>Memuat data…</b></div>
+    </div>
+  </section>
+
+  <!-- ============ RUJUKAN ============ -->
+  <section class="tab" id="tab-rujukan" hidden>
+    <div class="card">
+      <h2>Interpretasi MST</h2>
+      <div class="tbl"><table>
+        <thead><tr><th>Skor</th><th>Kategori</th><th>Tindak lanjut</th></tr></thead>
+        <tbody>
+          <tr><td class="n">0–1</td><td><span class="pill ok">Tidak berisiko</span></td><td>Skrining ulang setiap minggu selama dirawat</td></tr>
+          <tr><td class="n">≥ 2</td><td><span class="pill warn">Berisiko malnutrisi</span></td><td>Lanjutkan asesmen gizi lengkap (GLIM) dan rujuk ke dietisien</td></tr>
+        </tbody></table></div>
+    </div>
+    <div class="card">
+      <h2>Kriteria GLIM <small>Cederholm dkk., 2019</small></h2>
+      <p class="note">Diagnosis malnutrisi bila ada minimal 1 kriteria fenotip dan 1 kriteria etiologi. Derajat ditentukan oleh kriteria fenotip.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Fenotip</th><th>Stadium 1 (sedang)</th><th>Stadium 2 (berat)</th></tr></thead>
+        <tbody>
+          <tr><td>Penurunan BB</td><td>5–10% dalam 6 bln, atau 10–20% &gt; 6 bln</td><td>&gt;10% dalam 6 bln, atau &gt;20% &gt; 6 bln</td></tr>
+          <tr><td>IMT rendah (global)</td><td>&lt;20 (&lt;70 th), &lt;22 (≥70 th)</td><td>&lt;18,5 (&lt;70 th), &lt;20 (≥70 th)</td></tr>
+          <tr><td>IMT rendah (Asia)</td><td colspan="2">&lt;18,5 (&lt;70 th), &lt;20 (≥70 th). Derajat berat ditentukan dari kriteria lain.</td></tr>
+          <tr><td>Massa otot</td><td>Defisit ringan–sedang</td><td>Defisit berat</td></tr>
+        </tbody></table></div>
+      <div class="tbl"><table>
+        <thead><tr><th>Etiologi</th><th>Keterangan</th></tr></thead>
+        <tbody>
+          <tr><td>Asupan / asimilasi</td><td>≤50% kebutuhan &gt;1 minggu, penurunan asupan apa pun &gt;2 minggu, atau gangguan GI kronis</td></tr>
+          <tr><td>Inflamasi</td><td>Penyakit/cedera akut, atau penyakit kronis terkait inflamasi</td></tr>
+        </tbody></table></div>
+    </div>
+    <div class="card">
+      <h2>Indeks Massa Tubuh <small>Asia-Pasifik (WHO 2000)</small></h2>
+      <div class="tbl"><table>
+        <thead><tr><th>IMT (kg/m²)</th><th>Kategori</th></tr></thead>
+        <tbody>
+          <tr><td class="n">&lt; 18,5</td><td><span class="pill warn">Berat badan kurang</span></td></tr>
+          <tr><td class="n">18,5 – 22,9</td><td><span class="pill ok">Normal</span></td></tr>
+          <tr><td class="n">23,0 – 24,9</td><td><span class="pill warn">Berat badan lebih</span></td></tr>
+          <tr><td class="n">25,0 – 29,9</td><td><span class="pill bad">Obesitas I</span></td></tr>
+          <tr><td class="n">≥ 30,0</td><td><span class="pill bad">Obesitas II</span></td></tr>
+        </tbody></table></div>
+    </div>
+    <div class="card">
+      <h2>Massa & kekuatan otot <small>AWGS 2019</small></h2>
+      <div class="tbl"><table>
+        <thead><tr><th>Parameter</th><th>Laki-laki</th><th>Perempuan</th></tr></thead>
+        <tbody>
+          <tr><td>Lingkar betis rendah</td><td class="n">&lt; 34 cm</td><td class="n">&lt; 33 cm</td></tr>
+          <tr><td>Kekuatan genggam rendah</td><td class="n">&lt; 28 kg</td><td class="n">&lt; 18 kg</td></tr>
+        </tbody></table></div>
+      <p class="note">Lingkar betis dipengaruhi edema dan obesitas; tafsirkan bersama pemeriksaan fisik.</p>
+    </div>
+    <div class="card">
+      <h2>Nilai rujukan laboratorium <small>dewasa</small></h2>
+      <div class="tbl"><table id="ref-lab"></table></div>
+      <div class="tbl"><table>
+        <thead><tr><th>Albumin (g/dL)</th><th>Total limfosit (/mm³)</th><th>Status deplesi</th></tr></thead>
+        <tbody>
+          <tr><td class="n">≥ 3,5</td><td class="n">≥ 1.500</td><td><span class="pill ok">Normal</span></td></tr>
+          <tr><td class="n">2,8 – 3,4</td><td class="n">1.200 – 1.499</td><td><span class="pill warn">Deplesi ringan</span></td></tr>
+          <tr><td class="n">2,1 – 2,7</td><td class="n">800 – 1.199</td><td><span class="pill bad">Deplesi sedang</span></td></tr>
+          <tr><td class="n">&lt; 2,1</td><td class="n">&lt; 800</td><td><span class="pill bad">Deplesi berat</span></td></tr>
+        </tbody></table></div>
+      <p class="note">Albumin dan prealbumin dipengaruhi inflamasi dan status cairan, sehingga bukan penanda tunggal status gizi. Nilai rujukan bisa berbeda antar laboratorium.</p>
+    </div>
+  </section>
+
+  <!-- ============ AKUN ============ -->
+  <section class="tab" id="tab-akun" hidden>
+    <div class="card">
+      <h2>Profil saya</h2>
+      <div class="rows">
+        <div class="row"><span class="k">Nama</span><span class="v" id="ak-nm">–</span></div>
+        <div class="row"><span class="k">Peran</span><span class="v" id="ak-peran">–</span></div>
+        <div class="row"><span class="k">Profesi</span><span class="v" id="ak-prof">–</span></div>
+        <div class="row"><span class="k">Email</span><span class="v" id="ak-email">–</span></div>
+      </div>
+      <div class="btns">
+        <button class="btn ghost" type="button" id="btn-gantisandi">Kirim email ganti sandi</button>
+        <button class="btn danger" type="button" id="btn-keluar">Keluar</button>
+      </div>
+    </div>
+
+    <div class="card" id="card-admin" hidden>
+      <h2>Kelola petugas <small>khusus admin</small></h2>
+      <p class="note">Petugas mendaftar sendiri dari aplikasi. Setujui akunnya di sini dan tentukan perannya.</p>
+      <div class="rows" id="akun-list"><p class="note">Memuat…</p></div>
+      <div class="tbl"><table>
+        <thead><tr><th>Peran</th><th>Hak akses</th></tr></thead>
+        <tbody>
+          <tr><td>Admin</td><td>Semua fitur, kelola petugas, ubah dan hapus semua data</td></tr>
+          <tr><td>Nakes</td><td>Input skrining, lihat semua data, ubah dan hapus data sendiri</td></tr>
+          <tr><td>Petugas</td><td>Input skrining, lihat semua data, ubah data sendiri</td></tr>
+        </tbody></table></div>
+    </div>
+
+    <div class="card">
+      <h2>Data tim</h2>
+      <div class="rows">
+        <div class="row"><span class="k">Jumlah data skrining</span><span class="v" id="ak-n">–</span></div>
+        <div class="row"><span class="k">Hari dengan data</span><span class="v" id="ak-d">–</span></div>
+        <div class="row"><span class="k">Data terakhir</span><span class="v" id="ak-last">–</span></div>
+      </div>
+      <p class="note">Data tersimpan di database online tim dan tersinkron ke semua HP. Saat tidak ada sinyal, data tetap bisa disimpan dan otomatis terkirim begitu HP kembali online.</p>
+    </div>
+  </section>
+</div>
+
+<div class="sheet" id="sheet" hidden><div class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="d-nm"></div></div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>
